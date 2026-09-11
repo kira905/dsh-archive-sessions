@@ -197,9 +197,9 @@ grep -n "id:" <DSH_HOME>/profiles/<name>/cordis.patch.yml
 
 | DSH 主包 | 状态 | 说明 |
 |---|---|---|
-| `0.1.1-rc.2` | ✅ 已在真实 DSH 实例上跑通（host + client 全流程） | 当前验证基线 |
+| `0.1.1-rc.2` | ✅ **已在真实 DSH 实例上跑通**（host 8 路由 + client 分栏全流程，26 项检查） | 当前验证基线 |
 | `0.1.1` 线其它补丁版 | ✅ 预期可用 | 未逐一实测 |
-| `>= 0.1.2` 且 `< 0.2.0` | ⚠️ 预期可用但**未逐一实测**：新线把 `@deepseek-ai/dsh-settings` 的 `installSettingsSection` / `settingsNamespace` 两个导出删掉了，改用 `ctx.settings.register(...)` | 本插件不 import 这两个符号（见下），且 client 注册做了运行时探测 |
+| `>= 0.1.2` 且 `< 0.2.0` | ⚠️ 预期可用但**未端到端实测**：新线把 `@deepseek-ai/dsh-settings` 的 `installSettingsSection` / `settingsNamespace` 两个导出删掉了（旧的社区插件因此启动崩）。本插件不 import 这两个符号；client 分栏用的 `ctx.slots.inject("settings.section", …)` 在新线官方源码里仍在用（`@deepseek-ai/dsh-client-ui-settings-general` 0.1.5-rc.1 实测签名一致） | 依赖项已逐条静态核对 |
 | `>= 0.2.0` | ❌ 未支持 | 主包尚未发布；破坏性变更宁可显式拒绝 |
 | `< 0.1.1-rc.2` | ❌ 未验证 | settings 分栏的 slot 形态可能不同 |
 
@@ -215,17 +215,29 @@ grep -n "id:" <DSH_HOME>/profiles/<name>/cordis.patch.yml
 
 ### 双 API 分支（新旧主包都能起）
 
-client 半注册 settings 分栏时**运行时探测**两套 API，按可用的那套走：
+client 半注册 settings 分栏时**运行时探测**，按可用的那套走：
 
 ```js
-// ① 新 API 可用时优先
-if (ctx.settings && typeof ctx.settings.installSection === "function") {
-  ctx.settings.installSection(sectionOptions(t), Section);
+// ① 首选 slot 注入：官方 @deepseek-ai/dsh-client-ui-settings-general 自己在用的姿势，
+//    0.1.1 线与 0.1.5 线的官方源码都还在用
+if (ctx.slots && typeof ctx.slots.inject === "function" && typeof ctx.slots.register === "function") {
+  ctx.slots.inject("settings.section", () => ctx.slots.register(sectionOptions(t), Section));
   return;
 }
-// ② 退回 slot 注入（0.1.1 线）
-ctx.slots.inject("settings.section", () => ctx.slots.register(sectionOptions(t), Section));
+// ② 兜底才试 ctx.settings.installSection，且要求「形参个数 < 4」——
+//    因为新线里同名方法的签名是 installSection(owner, ns, schema, entry, hooks)，
+//    那是服务端设置注册（5 参），直接当 UI 分栏用会把插件打崩
+const installSection = ctx.settings && ctx.settings.installSection;
+if (typeof installSection === "function" && installSection.length < 4) {
+  installSection(sectionOptions(t), Section);
+  return;
+}
+throw new Error("no usable settings-section API found");
 ```
+
+> 为什么要卡形参个数：`installSection` 这个名字在新旧语义之间**撞名了**——
+> 它在 0.1.2+ 里是「把一段配置 schema 注册进 settings 服务」，而本插件要的是
+> 「往设置页插一个 UI 分栏」。不卡参数个数就会把配置注册 API 当 UI API 调用。
 
 host 半注册路由时同样探测：
 
@@ -234,7 +246,7 @@ const server = ctx.webServer ?? ctx.server;   // 不同主包版本暴露的服�
 server.register(route);
 ```
 
-两个都找不到时会抛一条明确的错误（而不是静默失效）。
+两处都找不到时会抛一条明确的错误（而不是静默失效）。
 
 ### 本插件刻意不依赖的东西
 

@@ -5,12 +5,12 @@
 //   node scripts/verify-live.mjs --base http://127.0.0.1:3090 --home H:/test/.dsh --keep
 //
 // 它会：
-//   1) 在 <DSH_HOME>/_archived-sessions/<批次>/ 造 2 个**整条 id 带 dsh-oss-verify 标记**的假会话
+//   1) 在 <DSH_HOME>/_archived-sessions/<批次>/ 造 2 个**整条 id 带 verify-fixture 标记**的假会话
 //   2) 走真实 HTTP 路由列出来、预览、恢复一个、删除另一个
 //   3) 校验磁盘副作用（恢复的字节一致、源已删、删除的目录没了）
 //   4) 清理它造出来的一切（--keep 则保留）
 //
-// 安全设计：只碰自己造的会话（id 前缀 dsh-oss-verify-），不读不写任何真实会话内容，
+// 安全设计：只碰自己造的会话（id 前缀 verify-fixture-），不读不写任何真实会话内容，
 //          绝不调用 /auto/run 的真归档模式。
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -25,7 +25,7 @@ const BASE = value('base', 'http://127.0.0.1:3090').replace(/\/+$/, '')
 const HOME = value('home', null)
 const PREFIX = value('prefix', '/api/dsh-archive-sessions')
 const KEEP = argv.includes('--keep')
-const STAMP = value('stamp', 'dsh-oss-verify')
+const STAMP = value('stamp', 'verify-fixture')
 
 if (HOME === null) {
   console.error('usage: node scripts/verify-live.mjs --base <url> --home <DSH_HOME> [--prefix <apiPrefix>] [--keep]')
