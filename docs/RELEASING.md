@@ -87,6 +87,20 @@ npm publish --access public   # 首次发布前确认包名可用、LICENSE/READ
 > 发 npm 的前提是包名 `dsh-archive-sessions` 未被占用，且愿意承担长期可用性承诺。
 > 只发 GitHub Release（用户 `git clone` 后按 README 手工安装）是更轻的选择。
 
+### 双端发布（Gitee 镜像 + GitHub 主）的四个实测坑
+
+1. **Gitee 建仓后默认是私有**——即便建仓请求里写了 `private: false`，实测建出来的仍是私有仓
+   （表现为"公开仓"其实只有自己能看，匿名 API 一律 `404 Not Found Project`）。
+   建仓后必须再显式 PATCH 一次：`PATCH /api/v5/repos/{owner}/{repo}`，
+   **且必须带 `name` 字段**（否则报 `{"messages":["name is missing"]}`），
+   body 用 form 编码：`access_token=…&name=<repo>&private=false`。`push-publish.mjs` 已内置这一步。
+2. **post-publish 复核要看"匿名视角"**：用带 token 的 API 读得到 ≠ 公开。
+   权威判据 = 匿名读 `GET /api/v5/repos/{owner}/{repo}` 返回 `private: false`，且匿名能取到文件内容。
+3. **重打过的 tag 推送会被拒**（提示像认证失败其实是 non-fast-forward）→ **只对 tag 用 `--force`**，
+   分支仍走非快进保护。
+4. **Gitee 不因 push 自动建仓**：目标仓不存在时 push 直接 `404 not found`；
+   建仓只能走 API（要账号级令牌）或网页。
+
 ## 5. 与文档侧的互链
 
 开源支线分两半：
@@ -96,7 +110,7 @@ npm publish --access public   # 首次发布前确认包名可用、LICENSE/READ
   由**独立发布说明**承载。
 
 两边发布时**互相链接**：README §10「设计依据」给出文档侧链接
-（Gitee <https://gitee.com/kira905/ops-handoff-design> ｜ GitHub <https://github.com/kira905-cloud/ops-handoff-design>）；
+（Gitee <https://gitee.com/kira905/ops-handoff-design> ｜ GitHub <https://github.com/kira905/ops-handoff-design>）；
 文档侧的发布说明里给出本仓库链接与对应版本号。**两边的版本号各自独立**，
 互相引用时写明「引用的是 vX.Y.Z 时的行为」，避免一边改了另一边不知情。
 

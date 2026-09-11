@@ -322,7 +322,10 @@ dsh-archive-sessions/
 ├─ scripts/
 │  ├─ test-e2e.mjs             端到端测试（干净临时路径 + 独立配置 + 真实 HTTP，跑通全流程）
 │  ├─ test-host.mjs            测试宿主：把 host 半挂在最小 webServer 上
-│  └─ verify-source.mjs        静态验证（语法 / 配置行为 / 硬编码与隐私扫描）
+│  ├─ verify-source.mjs        静态验证（语法 / 配置行为 / 硬编码与隐私扫描）
+│  ├─ verify-publish.mjs       发布后复核（两端 refs 对齐 + 内容级 API 直读 + 匿名可见 + 敏感复扫）
+│  ├─ push-publish.mjs         幂等推送器（自检 → 建仓 → 临时带 token URL 推送 → 回读校验）
+│  └─ deploy.mjs               幂等部署（认 DSH_HOME，自动备份 + 生成一键回滚）
 └─ docs/
    └─ RELEASING.md             发布流程（版本号策略 / 变更记录 / 发布前检查单）
 ```
@@ -341,9 +344,19 @@ node scripts/test-e2e.mjs          # --keep 保留临时目录便于排查
 
 # 3) 在真实 DSH 上验证（装到测试实例，别拿正在干活的生产实例试）
 #    启动 DSH 后先 curl 一下 list 路由，再硬刷新 GUI 看分栏
+
+# 4) 发布后复核（只读；要两端都验就都跑）
+node scripts/verify-publish.mjs --owner <账号> --repo dsh-archive-sessions
+node scripts/verify-publish.mjs --owner <账号> --repo dsh-archive-sessions --skip-github
+
+# 5) 发布（幂等；token 走环境变量，不落盘、不写 git remote）
+$env:OSS_PUSH_TOKEN='<token>'; node scripts/push-publish.mjs --platform gitee --owner <账号> --repo dsh-archive-sessions
 ```
 
-两条脚本都是**零依赖**的，不需要 `npm install`。
+所有脚本都是**零依赖**的，不需要 `npm install`。
+
+> 发布相关的坑（Gitee 建仓默认私有、PATCH 必须带 name、重打 tag 才用 --force 等）记在
+> `docs/RELEASING.md` 与本机 `oss-publish` 技能里。
 
 ---
 

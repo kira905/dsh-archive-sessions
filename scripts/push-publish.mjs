@@ -147,6 +147,24 @@ if (exists) {
   } catch (err) {
     say('  create 请求失败：' + err.message + '（若仓库已存在可忽略）')
   }
+  // ⚠️ 坑（2026-09-11 实测）：Gitee 建仓即便请求体写 private:false，建出来的仓**仍是私有**，
+  //    必须再显式 PATCH 一次才会变公开（否则公开仓变成"只有自己能看"，等于没开源）。
+  //    另外 Gitee 的 PATCH 必须带 name 字段，否则报 {"messages":["name is missing"]}。
+  if (PLATFORM === 'gitee') {
+    try {
+      const res = await fetch(`https://gitee.com/api/v5/repos/${OWNER}/${REPO}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ access_token: TOKEN, name: REPO, private: 'false' }),
+      })
+      const body = await res.json().catch(() => ({}))
+      const nowPublic = body && body.private === false
+      say('  设为公开 -> HTTP ' + res.status + (nowPublic ? '（private=false 已确认）' : '（未确认，请到仓库设置里核对可见性）'))
+      if (!nowPublic) say('  响应片段：' + JSON.stringify(body).slice(0, 200))
+    } catch (err) {
+      say('  设为公开失败：' + err.message + ' → 请手工到 Gitee 仓库设置里把可见性改为「公开」')
+    }
+  }
 }
 
 // ── 3. 推送（临时 URL，不写 remote） ──────────────────────────────────────
