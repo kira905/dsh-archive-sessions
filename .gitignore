@@ -1,0 +1,15 @@
+# 临时 / 本地文件
+.tmp-*/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# 依赖与构建产物（本仓库零依赖、无构建步骤，理论上不该出现）
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+*.tgz
+
+# 测试跑出来的临时 home（scripts/test-e2e.mjs 用的是系统临时目录，这里再兜一层）
+.tmp-home-*/

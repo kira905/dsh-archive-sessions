@@ -1,0 +1,76 @@
+{
+  "_readme": [
+    "dsh-archive-sessions 配置文件示例（JSON 不支持注释，说明都写在这个 _readme 里）。",
+    "",
+    "放置位置（任选其一，优先级从高到低）：",
+    "  1. 环境变量 ARCHIVE_SESSIONS_CONFIG 指向的任意路径",
+    "  2. <DSH_HOME>/<主机名>.archive-sessions.config.json   ← 一台机器一份，多机共存推荐",
+    "  3. <DSH_HOME>/archive-sessions.config.json",
+    "  其中 <DSH_HOME> = $DSH_HOME，未设置时是 ~/.dsh。",
+    "",
+    "只写你要改的键即可，未写的键取插件内置默认值（本文件列出的就是全部默认值）。",
+    "路径键写成相对路径时按 <DSH_HOME> 解析（例：\"archiveRoot\": \"archive-2\" → <DSH_HOME>/archive-2），",
+    "所以这份文件可以直接在 Windows / macOS / Linux 之间搬运，不必写死用户名。",
+    "改完这个文件要重启 DSH 才生效；只有 auto.* 之外的那几项例外说明见 README「配置」一节。"
+  ],
+  "language": "zh",
+  "paths": {
+    "home": null,
+    "archiveRoot": null,
+    "sessionsRoot": null,
+    "storagesDir": null,
+    "workspaceFile": null,
+    "projcacheFile": null
+  },
+  "archive": {
+    "manifestFile": "manifest.json",
+    "stateFile": ".auto-archive.json",
+    "unknownCwdKey": "_no-cwd",
+    "headerFrames": 8,
+    "copyRetries": 3,
+    "copyRetryDelayMs": 120,
+    "removeRetries": 4,
+    "removeRetryDelayMs": 180
+  },
+  "preview": {
+    "maxMessages": 50,
+    "maxMessageChars": 4000
+  },
+  "server": {
+    "apiPrefix": "/api/dsh-archive-sessions",
+    "maxJsonBodyBytes": 262144,
+    "allowedHosts": ["127.0.0.1", "localhost", "[::1]"],
+    "rejectCrossSite": true,
+    "sameOriginOnly": true
+  },
+  "auto": {
+    "enabled": false,
+    "dryRun": true,
+    "hours": 48,
+    "intervalMs": 21600000,
+    "minSizeMb": 0,
+    "maxPerRun": 50,
+    "tickMs": 60000,
+    "startDelayMs": 120000,
+    "emptyScanMaxBytes": 65536
+  },
+  "ui": {},
+  "uiByLanguage": {
+    "zh": {
+      "nav": "归档会话管理",
+      "refresh": "刷新",
+      "actionRestore": "恢复",
+      "actionDelete": "删除",
+      "roleUser": "用户",
+      "roleAssistant": "助手"
+    },
+    "en": {
+      "nav": "Archived Sessions",
+      "refresh": "Refresh",
+      "actionRestore": "Restore",
+      "actionDelete": "Delete",
+      "roleUser": "User",
+      "roleAssistant": "Assistant"
+    }
+  }
+}
