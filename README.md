@@ -1,6 +1,6 @@
 # dsh-archive-sessions
 
-[English](#english) · 中文（默认）
+[English](README.en.md) · 中文（默认）
 
 一个 **DeepSeek Harness (DSH) Web 插件**：在设置页新增「归档会话管理」分栏，用来查看 / 预览 /
 恢复 / 删除那些被**物理移出** `sessions` 目录的老会话。
@@ -349,13 +349,17 @@ node scripts/test-e2e.mjs          # --keep 保留临时目录便于排查
 
 ## 十、设计依据
 
-本插件是「多机交接 / 自治式运维」这套方法论在**一个具体工具上**的落地：方法论文档（脱敏后公开）
-讲清楚了为什么要把「归档 = 物理移出目录」而不是打标记、为什么恢复必须是两段式（copy → 校验 → 删源）、
-为什么要给所有可调项留配置口子。
+本组件是「[ops-handoff-design](https://github.com/kira905/ops-handoff-design)」所述运维体系的一个实现，
+设计依据（对应文档仓约定的固定四问）：
 
-- 方法论文档仓：**Gitee（镜像）<https://gitee.com/kira905/ops-handoff-design>** ｜ **GitHub（主）<https://github.com/kira905-cloud/ops-handoff-design>**
-  （文档仓会在其组件索引表里回指本仓）
-- 版本对应：本仓 `v0.2.0` ← 对应文档仓 `v0.1.0`（占位，定稿时校准）
+- **它为什么存在、边界在哪** → 见《自治式运维管家设计》**§2 L4 归档**、**§6 P2 事件源「归档出错」**
+- **它与宿主版本的兼容区间** → 见《多机交接与云中继设计》**§4.5「兼容性要求」**（另见本 README 第五节）
+- **本组件特有的坑与实测** → 见本 README「已知限制」一节，以及 `docs/RELEASING.md` 的兼容性回归清单
+- **文档仓地址** → Gitee（镜像）<https://gitee.com/kira905/ops-handoff-design>
+  ｜ GitHub（主）<https://github.com/kira905/ops-handoff-design>
+  （文档仓的组件索引表回指本仓；两仓互链、版本各自独立）
+
+> 设计稿里不写具体仓库地址（写死即死链），实现清单统一收在文档仓的组件索引表里——本仓只负责回链章节。
 
 ---
 
