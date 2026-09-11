@@ -19,6 +19,7 @@
 //   - token 只出现在子进程参数里，不写入任何文件、不进 git 配置、不打印；
 //   - 所有 git 命令的输出都会过一遍脱敏（把 token 串替换成 ***），避免误打印到日志/终端历史。
 import { spawnSync } from 'node:child_process'
+import { realpathSync } from 'node:fs'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -67,6 +68,53 @@ const git = (args, options = {}) => {
   return { status: res.status, stdout: mask(res.stdout ?? ''), stderr: mask(res.stderr ?? '') }
 }
 const say = (msg) => console.log(mask(msg))
+
+/**
+ * 确保 Gitee 仓是公开的（可单测的纯函数，不依赖脚本其它状态）。
+ *
+ * ⚠️ 坑（2026-09-11 实测）：Gitee 建仓即便请求体里写了 `private: false`，建出来的仓**仍然是私有**——
+ *    症状是"以为发了公开仓，其实只有自己能看"：匿名 API 一律 `404 Not Found Project`，
+ *    而带 token 的 API 正常、`git ls-remote` 匿名也能过（所以光看 ls-remote 会误判成功）。
+ *    必须在建仓后**再显式 PATCH 一次**；且该 PATCH **必须带 `name` 字段**，
+ *    否则报 `{"messages":["name is missing"]}`。
+ *
+ * @returns {Promise<{ok: boolean, status: number, private?: boolean, detail?: string}>}
+ */
+export async function ensureGiteePublic({ owner, repo, token, fetchImpl = fetch }) {
+  try {
+    const res = await fetchImpl(`https://gitee.com/api/v5/repos/${owner}/${repo}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ access_token: token, name: repo, private: 'false' }),
+    })
+    const body = await res.json().catch(() => ({}))
+    const isPublic = body !== null && typeof body === 'object' && body.private === false
+    return { ok: res.status === 200 && isPublic, status: res.status, private: body?.private, detail: isPublic ? undefined : JSON.stringify(body).slice(0, 200) }
+  } catch (err) {
+    return { ok: false, status: 0, detail: err instanceof Error ? err.message : String(err) }
+  }
+}
+
+// ── 主流程（仅在直接执行本文件时运行；被 import 时只导出上面的纯函数） ───────
+//   注意：判断主入口必须 realpath 双方再比 —— 经 junction/symlink 调用时
+//   import.meta.url 是物理路径、process.argv[1] 是逻辑路径，直接比字符串会永远不相等，
+//   表现为「脚本静默退出、什么都不做」。
+function isMainEntry() {
+  if (typeof process.argv[1] !== 'string') return false
+  const selfPath = fileURLToPath(import.meta.url)
+  const canon = (p) => {
+    try {
+      return realpathSync.native(p).toLowerCase()
+    } catch {
+      return p.toLowerCase()
+    }
+  }
+  return canon(selfPath) === canon(process.argv[1])
+}
+
+if (!isMainEntry()) {
+  // 被当作库导入：不执行任何副作用
+} else {
 
 // ── 1. 前置自检 ────────────────────────────────────────────────────────────
 say('=== 推送前置自检 ===')
@@ -147,24 +195,15 @@ if (exists) {
   } catch (err) {
     say('  create 请求失败：' + err.message + '（若仓库已存在可忽略）')
   }
-  // ⚠️ 坑（2026-09-11 实测）：Gitee 建仓即便请求体写 private:false，建出来的仓**仍是私有**，
-  //    必须再显式 PATCH 一次才会变公开（否则公开仓变成"只有自己能看"，等于没开源）。
-  //    另外 Gitee 的 PATCH 必须带 name 字段，否则报 {"messages":["name is missing"]}。
-  if (PLATFORM === 'gitee') {
-    try {
-      const res = await fetch(`https://gitee.com/api/v5/repos/${OWNER}/${REPO}`, {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ access_token: TOKEN, name: REPO, private: 'false' }),
-      })
-      const body = await res.json().catch(() => ({}))
-      const nowPublic = body && body.private === false
-      say('  设为公开 -> HTTP ' + res.status + (nowPublic ? '（private=false 已确认）' : '（未确认，请到仓库设置里核对可见性）'))
-      if (!nowPublic) say('  响应片段：' + JSON.stringify(body).slice(0, 200))
-    } catch (err) {
-      say('  设为公开失败：' + err.message + ' → 请手工到 Gitee 仓库设置里把可见性改为「公开」')
-    }
-  }
+}
+
+// 可见性：Gitee 建仓默认私有（见 ensureGiteePublic 注释），**无论仓是否已存在都确保一次**——
+// 这样已存在的私有仓也会被纠正，脚本可重入。
+if (PLATFORM === 'gitee') {
+  const visibility = await ensureGiteePublic({ owner: OWNER, repo: REPO, token: TOKEN })
+  say('  设为公开 -> ' + (visibility.ok
+    ? 'OK（HTTP ' + visibility.status + '，private=false 已确认）'
+    : 'HTTP ' + visibility.status + '：' + (visibility.detail ?? '未确认') + ' → 请到 Gitee 仓库设置里手工把可见性改为「公开」'))
 }
 
 // ── 3. 推送（临时 URL，不写 remote） ──────────────────────────────────────
@@ -209,3 +248,5 @@ say('\n[完成] 远端地址：' + conf.lsRemote(OWNER, REPO).replace(/\.git$/, 
 say('[提醒] 本仓 git remote 没有被改写（token 未落盘）；需要配置无 token 的 origin 可用：')
 say('       git remote add origin ' + conf.lsRemote(OWNER, REPO))
 process.exit(same && hasMain && hasVersionTag ? 0 : 1)
+
+} // end of isMainEntry() guard
