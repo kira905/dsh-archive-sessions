@@ -378,13 +378,20 @@ $env:OSS_PUSH_TOKEN='<token>'; node scripts/push-publish.mjs --platform gitee --
 
 ## 十一、许可与致谢
 
-MIT，见 [LICENSE](./LICENSE)。
+**AGPL-3.0**（GNU Affero General Public License v3.0），见 [LICENSE](./LICENSE)。
+
+本项目管理在 **AGPL-3.0** 下开放：个人、学习、开源项目可自由使用与修改。
+若需在**闭源**或**商业场景**中使用（AGPL 的传染条款不适用），请联系获取**商业授权**——
+本仓暂无公开的联系邮箱，**请通过本仓 Issue 联系**。
+
+**许可变更记录**：**v0.2.0 及之前为 MIT，v0.3.0 起为 AGPL-3.0。**
+已经按 MIT 发布的版本，他人已获得的授权收不回——许可变更只约束**未来版本**（详见 `docs/RELEASING.md` §许可变更检查）。
 
 会话解码部分参考了 DSH 会话插件生态里公开的 zstd 多帧解码实现思路；
 本仓库代码为独立实现，不含任何第三方私有代码或数据。
 
 > 本仓为开源支线「代码侧」；「方法论文档侧」另有一仓（见上节链接），两仓互链、许可各自独立
-> （文档侧 CC BY-NC-SA 4.0，代码侧 MIT）。
+> （文档侧 CC BY-NC-SA 4.0，代码侧 AGPL-3.0 + 商业授权）。
 
 ---
 
@@ -408,4 +415,8 @@ auto-archiver.
 - Restore is two-phase (copy → byte-verify → delete source) and never overwrites an existing session.
 - Delete is permanent. Auto-archive is disabled by default and defaults to dry-run.
 
-MIT licensed.
+Licensed under **AGPL-3.0** (see [LICENSE](./LICENSE)). Free to use and modify for personal,
+educational and open-source projects. For **closed-source or commercial** use (where AGPL's
+copyleft does not apply) a **commercial license** is available — **open an issue in this
+repository** to get in touch. License history: **MIT up to and including v0.2.0, AGPL-3.0 from
+v0.3.0 onward** (a license change only binds future versions).

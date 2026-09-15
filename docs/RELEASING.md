@@ -56,6 +56,13 @@
 - [ ] **隐私扫描**：仓库里没有本机路径、机器名、用户名、会话内容、凭据；
       `git grep -nE "[A-H]:[\\\\/]"` 只应命中文档里的通用示例
 - [ ] `package.json` 的 `version` 已按第 1 节规则递增；`peerDependencies` 区间与实测一致
+- [ ] **许可变更检查（若本次动了许可）**：许可变更必须**三处齐改**——
+      ① 仓根 `LICENSE` 文件（用官方全文，不改写条款文字）
+      ② `README.md` 与 `README.en.md` 的 License / 商业授权段（双语一致）
+      ③ `package.json` 的 `license` 字段（SPDX 标识，如 `AGPL-3.0-only`）；
+      并在 README 变更记录里写明「哪个版本起换了什么许可」。
+      ⚠️ 许可变更**只约束未来版本**：已按旧许可发布的版本，他人已获得的授权收不回——
+      这一点必须写进 README，别让读者以为旧版本也跟着换了许可
 - [ ] `CHANGELOG.md` 已写、日期已填、`BREAKING` 已标注（若有）
 - [ ] README 的「兼容性」表格与实测结论一致（哪些版本"已实测"，哪些"预期可用"）
 - [ ] `cordis.patch.yml.example` 里的 `id` / `name` 与 `package.json` 的包名一致
@@ -120,7 +127,7 @@ npm publish --access public   # 首次发布前确认包名可用、LICENSE/READ
 2. 需要回填到**文档仓组件索引表**的一行：
 
    ```
-   | dsh-archive-sessions | v0.2.0 | MIT | <本仓 URL> | 归档会话管理：物理归档会话的查看/预览/恢复/删除 |
+   | dsh-archive-sessions | v0.3.0 | AGPL-3.0（+ 商业授权） | <本仓 URL> | 归档会话管理：物理归档会话的查看/预览/恢复/删除 |
    ```
 
 3. 文档仓若有更新，本仓 README §10 的「版本对应」行同步校准。

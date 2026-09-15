@@ -193,8 +193,18 @@ All scripts are dependency-free — no `npm install` needed.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+**AGPL-3.0** (GNU Affero General Public License v3.0) — see [LICENSE](./LICENSE).
+
+This project is open under **AGPL-3.0**: free to use and modify for personal, educational and
+open-source projects. If you need it in a **closed-source** or **commercial** setting (where
+AGPL's copyleft obligations do not apply), a **commercial license** is available — this
+repository has no public contact address yet, so **please reach out by opening an issue**.
+
+**License history**: **MIT up to and including v0.2.0; AGPL-3.0 from v0.3.0 onward.** Licenses
+cannot be revoked for versions already published under MIT — a license change only binds
+**future** versions (see `docs/RELEASING.md` §License-change check).
 
 The session-decoding code was written independently; it contains no third-party private code or data.
 The docs half of this open-source branch is licensed **CC BY-NC-SA 4.0**; the two halves are licensed
-separately on purpose (documents to discourage commercial resale, code to lower the barrier to use).
+separately on purpose (documents to discourage commercial resale, code under a copyleft license with
+commercial licensing available).

@@ -1,6 +1,6 @@
 {
   "name": "dsh-archive-sessions",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "DSH web plugin: browse, preview, restore and delete sessions that were physically moved out of the sessions directory (archived sessions). Zero runtime dependencies.",
   "keywords": [
     "dsh",
@@ -49,5 +49,5 @@
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "AGPL-3.0-only"
 }
